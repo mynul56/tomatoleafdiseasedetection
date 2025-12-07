@@ -23,6 +23,20 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Disease class names (10 classes for tomato leaf diseases)
+CLASS_NAMES = [
+    'Bacterial_spot',
+    'Early_blight',
+    'Late_blight',
+    'Leaf_Mold',
+    'Septoria_leaf_spot',
+    'Spider_mites_Two_spotted_spider_mite',
+    'Target_Spot',
+    'Tomato_Yellow_Leaf_Curl_Virus',
+    'Tomato_mosaic_virus',
+    'Healthy'
+]
+
 # Try to load TensorFlow model
 model = None
 try:
