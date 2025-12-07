@@ -39,8 +39,8 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: Colors.green.shade50,
       appBar: AppBar(
         title: const Text(
-          'Tomato Leaf Disease Detector',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          'TOMATO LEAF DISEASE DETECTOR',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         backgroundColor: Colors.green.shade700,
         foregroundColor: Colors.white,
@@ -54,7 +54,15 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // App Logo/Icon
-              Icon(Icons.eco, size: 120, color: Colors.green.shade700),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.asset(
+                  'assets/unnamed.jpg',
+                  width: 200,
+                  height: 200,
+                  fit: BoxFit.cover,
+                ),
+              ),
               const SizedBox(height: 24),
 
               // Title

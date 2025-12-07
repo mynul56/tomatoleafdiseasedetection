@@ -9,7 +9,7 @@ class ApiService {
   // For iOS Simulator: use localhost or your machine's IP
   // For physical device: use your machine's local IP address
   // For VPS: use your VPS IP or domain
-  static const String baseUrl = 'http://10.0.2.2:5005';
+  static const String baseUrl = 'http://206.162.244.175:5005';
 
   Future<PredictionResult> predictDisease(File imageFile) async {
     try {
