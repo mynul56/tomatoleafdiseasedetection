@@ -8,7 +8,8 @@ class ApiService {
   // For Android Emulator: use 10.0.2.2
   // For iOS Simulator: use localhost or your machine's IP
   // For physical device: use your machine's local IP address
-  static const String baseUrl = 'http://10.0.2.2:5000';
+  // For VPS: use your VPS IP or domain
+  static const String baseUrl = 'http://10.0.2.2:5005';
 
   Future<PredictionResult> predictDisease(File imageFile) async {
     try {

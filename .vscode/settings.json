@@ -1,0 +1,9 @@
+{
+    "python.defaultInterpreterPath": "${workspaceFolder}/backend_venv/bin/python",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/backend_venv/lib/python3.13/site-packages"
+    ],
+    "files.associations": {
+        "*.py": "python"
+    }
+}
