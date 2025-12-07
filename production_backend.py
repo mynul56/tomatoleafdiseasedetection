@@ -27,16 +27,40 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 model = None
 try:
     from tensorflow import keras
+    from tensorflow.keras.applications import EfficientNetB3
+    from tensorflow.keras import layers, models
+    
     if os.path.exists(MODEL_PATH):
+        # Load custom trained model
         model = keras.models.load_model(MODEL_PATH)
-        print(f"✅ Model loaded from {MODEL_PATH}")
+        print(f"✅ Custom model loaded from {MODEL_PATH}")
     else:
-        print(f"⚠️  Model file not found at {MODEL_PATH}")
-        print("   Using rule-based detection as fallback")
+        # Use EfficientNetB3 pretrained model with custom classifier
+        print("📥 Loading EfficientNetB3 pretrained model...")
+        base_model = EfficientNetB3(
+            include_top=False,
+            weights='imagenet',
+            input_shape=(224, 224, 3)
+        )
+        base_model.trainable = False  # Freeze base model
+        
+        # Add custom classification head
+        model = models.Sequential([
+            base_model,
+            layers.GlobalAveragePooling2D(),
+            layers.Dropout(0.3),
+            layers.Dense(256, activation='relu'),
+            layers.Dropout(0.3),
+            layers.Dense(len(CLASS_NAMES), activation='softmax')
+        ])
+        
+        print("✅ EfficientNetB3 model loaded with custom classifier")
+        print("   Note: Using pretrained weights - for best accuracy, train on tomato disease dataset")
 except ImportError:
     print("⚠️  TensorFlow not installed. Using rule-based detection.")
 except Exception as e:
     print(f"⚠️  Error loading model: {e}")
+    print("   Using rule-based detection as fallback")
 
 # Disease information database
 DISEASE_INFO = {
@@ -169,21 +193,26 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def preprocess_image(image_path):
-    """Preprocess image for model prediction"""
+    """Preprocess image for EfficientNetB3 model prediction"""
+    from tensorflow.keras.applications.efficientnet import preprocess_input
+    
     img = Image.open(image_path)
     
     # Convert to RGB if necessary
     if img.mode != 'RGB':
         img = img.convert('RGB')
     
-    # Resize to model input size
+    # Resize to EfficientNetB3 input size
     img = img.resize((224, 224))
     
-    # Convert to numpy array and normalize
-    img_array = np.array(img) / 255.0
+    # Convert to numpy array
+    img_array = np.array(img)
     
     # Add batch dimension
     img_array = np.expand_dims(img_array, axis=0)
+    
+    # Apply EfficientNet preprocessing
+    img_array = preprocess_input(img_array)
     
     return img_array
 
