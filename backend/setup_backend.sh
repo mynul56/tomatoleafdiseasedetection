@@ -16,9 +16,25 @@ if [ ! -f "app.py" ]; then
     exit 1
 fi
 
+# Setup virtual environment
+if [ ! -d "venv" ]; then
+    echo "📦 Creating virtual environment..."
+    python3 -m venv venv
+    echo "✅ Virtual environment created"
+else
+    echo "✅ Virtual environment already exists"
+fi
+echo ""
+
+# Activate virtual environment
+echo "🔧 Activating virtual environment..."
+source venv/bin/activate
+echo ""
+
 # Install dependencies
-echo "📦 Step 1/4: Installing dependencies..."
-pip install -q -r requirements.txt
+echo "📦 Installing dependencies..."
+pip install --quiet --upgrade pip
+pip install --quiet -r requirements.txt
 echo "✅ Dependencies installed"
 echo ""
 
