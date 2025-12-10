@@ -14,14 +14,14 @@ class ResultScreen extends StatelessWidget {
   });
 
   Color _getConfidenceColor(double confidence) {
-    if (confidence >= 0.8) return Colors.green;
-    if (confidence >= 0.5) return Colors.orange;
+    if (confidence >= 80) return Colors.green;
+    if (confidence >= 50) return Colors.orange;
     return Colors.red;
   }
 
   @override
   Widget build(BuildContext context) {
-    final confidencePercentage = (result.confidence * 100).toStringAsFixed(1);
+    final confidencePercentage = result.confidence.toStringAsFixed(1);
 
     return Scaffold(
       backgroundColor: Colors.green.shade50,
@@ -95,7 +95,7 @@ class ResultScreen extends StatelessWidget {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: LinearProgressIndicator(
-                                  value: result.confidence,
+                                  value: result.confidence / 100,
                                   minHeight: 12,
                                   backgroundColor: Colors.grey.shade300,
                                   valueColor: AlwaysStoppedAnimation<Color>(

@@ -43,4 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Old model files (no longer needed)
 ResNet50_best_model.keras/

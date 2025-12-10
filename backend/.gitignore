@@ -1,0 +1,54 @@
+# Backend files and folders
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Trained models (too large for Git)
+*.h5
+*.keras
+*.pb
+*.pt
+*.pth
+*.onnx
+
+# Dataset files
+data/
+*.jpg
+*.jpeg
+*.png
+*.JPG
+*.JPEG
+*.PNG
+
+# Uploads folder
+uploads/
+
+# Training outputs
+training_history.png
+*.png
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+*.ipynb_checkpoints/
