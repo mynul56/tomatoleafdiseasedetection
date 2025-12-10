@@ -64,7 +64,7 @@ class ResultScreen extends StatelessWidget {
                               color: Colors.green.shade700,
                               size: 28,
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 result.disease,
