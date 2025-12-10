@@ -20,7 +20,7 @@ class ApiService {
 
       // Add the image file to the request
       request.files.add(
-        await http.MultipartFile.fromPath('file', imageFile.path),
+        await http.MultipartFile.fromPath('image', imageFile.path),
       );
 
       // Send the request
