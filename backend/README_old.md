@@ -1,411 +1,172 @@
 # Tomato Leaf Disease Detection Backend
 
-Complete backend implementation using ResNet50 with transfer learning for detecting all 10 tomato leaf diseases.
+## Overview
+This backend uses a pre-trained **ResNet50** model from HuggingFace to detect 10 different tomato leaf diseases with high accuracy.
 
-## 🎯 Overview
+## Model Information
+- **Model**: wellCh4n/tomato-leaf-disease-classification-resnet50
+- **Source**: HuggingFace Transformers
+- **Architecture**: ResNet50
+- **Classes**: 10 disease types
 
-This backend provides a REST API for detecting tomato leaf diseases using a deep learning model based on ResNet50 architecture with transfer learning from ImageNet.
+## Supported Diseases
+1. Healthy
+2. Bacterial Spot
+3. Early Blight
+4. Late Blight
+5. Leaf Mold
+6. Septoria Leaf Spot
+7. Spider Mites (Two-spotted Spider Mite)
+8. Target Spot
+9. Tomato Mosaic Virus
+10. Tomato Yellow Leaf Curl Virus
 
-### Supported Diseases (10 Classes)
+## Setup
 
-1. **Bacterial Spot** - Xanthomonas infection
-2. **Early Blight** - Alternaria solani fungus
-3. **Late Blight** - Phytophthora infestans
-4. **Leaf Mold** - Passalora fulva fungus
-5. **Septoria Leaf Spot** - Septoria lycopersici fungus
-6. **Spider Mites** - Two-spotted spider mite
-7. **Target Spot** - Corynespora cassiicola fungus
-8. **Yellow Leaf Curl Virus** - Whitefly-transmitted virus
-9. **Tomato Mosaic Virus** - Contact-transmitted virus
-10. **Healthy** - No disease detected
+### Local Development
 
-## 📁 Project Structure
-
-```
-backend/
-├── app.py                      # Flask API server (production)
-├── train.py                    # Model training script
-├── requirements.txt            # Python dependencies
-├── README.md                   # This file
-├── tomato_resnet50_model.h5   # Trained model (generated after training)
-├── training_history.png        # Training plots (generated after training)
-├── uploads/                    # Temporary upload folder
-└── data/                       # Dataset folder (see setup below)
-    └── tomato_dataset/
-        ├── train/
-        │   ├── Tomato___Bacterial_spot/
-        │   ├── Tomato___Early_blight/
-        │   ├── Tomato___Late_blight/
-        │   ├── Tomato___Leaf_Mold/
-        │   ├── Tomato___Septoria_leaf_spot/
-        │   ├── Tomato___Spider_mites Two-spotted_spider_mite/
-        │   ├── Tomato___Target_Spot/
-        │   ├── Tomato___Tomato_Yellow_Leaf_Curl_Virus/
-        │   ├── Tomato___Tomato_mosaic_virus/
-        │   └── Tomato___healthy/
-        └── val/
-            └── [same structure as train/]
-```
-
-## 🚀 Quick Start
-
-### ⚡ Fastest Way (Pre-trained Model - Recommended)
-
-**If you don't have time to train, use a pre-trained model:**
-
-1. **Download pre-trained model from Kaggle:**
+1. **Create virtual environment**:
    ```bash
-   # Search for: "tomato disease resnet model h5"
-   # Or visit: https://www.kaggle.com/search?q=tomato+disease+h5
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-2. **Place model in backend folder:**
-   ```bash
-   # Rename downloaded file to:
-   mv downloaded_model.h5 tomato_resnet50_model.h5
-   ```
-
-3. **Start server:**
+2. **Install dependencies**:
    ```bash
    pip install -r requirements.txt
+   ```
+
+3. **Start the server**:
+   ```bash
    python app.py
    ```
 
-### 🤖 Automated Setup (One Command)
+   The server will start on `http://0.0.0.0:5005`
 
-```bash
-cd backend
-bash setup_backend.sh
-```
+## API Endpoints
 
-This script will:
-- Install dependencies
-- Check for existing model
-- Offer to download dataset
-- Optionally train model
-- Test everything
+### GET /
+API documentation and usage information
 
-### 🎓 Train Your Own Model (Most Accurate)
+### GET /health
+Health check endpoint
 
-**Option A: Quick Training (30-60 minutes with GPU)**
-```bash
-# 1. Download dataset
-python prepare_dataset.py --download
-
-# 2. Quick train with MobileNetV2
-python quick_train.py
-```
-
-**Option B: Full Training (2-4 hours, best accuracy)**
-```bash
-# 1. Download dataset
-python prepare_dataset.py --download
-
-# 2. Full training with ResNet50
-python train.py
-```
-
-**Option C: Google Colab (FREE GPU)**
-```bash
-# 1. Open: https://colab.research.google.com
-# 2. Upload train.py and prepare_dataset.py
-# 3. Enable GPU: Runtime > Change runtime type > GPU
-# 4. Run training (faster with GPU!)
-# 5. Download model and place in backend/
-```
-
-## 📡 API Endpoints
-
-### Health Check
-
-```bash
-GET /health
-```
-
-**Response:**
+**Response**:
 ```json
 {
   "status": "healthy",
-  "model": "ResNet50",
   "model_loaded": true,
-  "classes": 10,
-  "class_names": ["Tomato___Bacterial_spot", ...]
+  "num_classes": 10
 }
 ```
 
-### Predict Disease
+### POST /predict
+Predict disease from uploaded image
 
+**Request**:
+- Method: POST
+- Content-Type: multipart/form-data
+- Body: image file with key "image"
+
+**Example using curl**:
 ```bash
-POST /predict
-Content-Type: multipart/form-data
-
-Body:
-  image: <image_file>
+curl -X POST \
+  -F "image=@/path/to/tomato_leaf.jpg" \
+  http://localhost:5005/predict
 ```
 
-**Response:**
+**Response**:
 ```json
 {
+  "success": true,
   "disease": "Early Blight",
-  "confidence": 98.45,
-  "description": "Early blight is caused by the fungus Alternaria solani...",
-  "treatment": [
-    "Remove and destroy infected leaves immediately",
-    "Apply copper-based fungicide every 7-10 days",
-    "Improve air circulation by spacing plants properly",
-    ...
-  ],
+  "confidence": 0.95,
+  "description": "Early blight creates concentric rings (target spots) on lower leaves first.",
+  "treatment": "Remove infected leaves, improve air circulation, mulch to prevent soil splash, and apply fungicides containing chlorothalonil or copper.",
+  "full_label": "A tomato leaf with Early Blight",
   "top_predictions": [
     {
       "disease": "Early Blight",
-      "confidence": 98.45
+      "confidence": 0.95,
+      "full_label": "A tomato leaf with Early Blight"
     },
     {
-      "disease": "Late Blight",
-      "confidence": 1.32
+      "disease": "Target Spot",
+      "confidence": 0.03,
+      "full_label": "A tomato leaf with Target Spot"
     },
     {
       "disease": "Septoria Leaf Spot",
-      "confidence": 0.23
+      "confidence": 0.01,
+      "full_label": "A tomato leaf with Septoria Leaf Spot"
     }
   ]
 }
 ```
 
-## 🧪 Testing the API
+## Deployment
 
-### Using cURL
+### Production Server
+For production deployment, use a WSGI server like **gunicorn**:
 
 ```bash
-# Health check
-curl http://localhost:5005/health
-
-# Predict disease
-curl -X POST -F "image=@/path/to/tomato_leaf.jpg" http://localhost:5005/predict
+pip install gunicorn
+gunicorn -w 4 -b 0.0.0.0:5005 app:app
 ```
 
-### Using Python
+### Environment Variables
+- `PORT`: Server port (default: 5005)
 
+## Model Files
+The model is downloaded from HuggingFace and stored in the `hf_model/` directory:
+- `config.json`: Model configuration and class labels
+- `model.safetensors`: Model weights (PyTorch format)
+- `preprocessor_config.json`: Image preprocessing configuration
+
+The model is automatically converted from PyTorch to TensorFlow when loaded for the first time.
+
+## Development Notes
+
+### Model Loading
+The model uses HuggingFace Transformers library and is loaded with:
 ```python
-import requests
+from transformers import TFResNetForImageClassification, AutoImageProcessor
 
-# Health check
-response = requests.get('http://localhost:5005/health')
-print(response.json())
-
-# Predict disease
-with open('tomato_leaf.jpg', 'rb') as f:
-    files = {'image': f}
-    response = requests.post('http://localhost:5005/predict', files=files)
-    print(response.json())
+model = TFResNetForImageClassification.from_pretrained('./hf_model', from_pt=True)
+processor = AutoImageProcessor.from_pretrained('./hf_model')
 ```
 
-## 🐳 Docker Deployment (Optional)
+### Image Processing
+Images are processed using the AutoImageProcessor which:
+1. Resizes to 224x224 pixels
+2. Normalizes pixel values
+3. Converts to the correct tensor format
 
-```dockerfile
-FROM python:3.11-slim
+### Prediction Flow
+1. Client uploads image via POST request
+2. Image is read and converted to RGB
+3. Processed with AutoImageProcessor
+4. Model makes prediction
+5. Results include top prediction + confidence + top 3 alternatives
+6. Disease information and treatment recommendations returned
 
-WORKDIR /app
+## Troubleshooting
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-
-EXPOSE 5005
-
-CMD ["python", "app.py"]
-```
-
+### Model Loading Issues
+If you get "No module named 'torch'" error:
 ```bash
-docker build -t tomato-disease-api .
-docker run -p 5005:5005 tomato-disease-api
+pip install torch --index-url https://download.pytorch.org/whl/cpu
 ```
 
-## 🌐 VPS Deployment
+### CUDA Warnings
+CUDA warnings (GPU-related) can be ignored if running on CPU. The model will automatically use CPU.
 
-### Deploy to VPS (Ubuntu)
-
+### Port Already in Use
+If port 5005 is already in use:
 ```bash
-# 1. SSH into VPS
-ssh user@206.162.244.175
-
-# 2. Clone repository
-git clone <your-repo-url>
-cd backend
-
-# 3. Install dependencies
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-# 4. Copy trained model to VPS
-# (from local machine)
-scp tomato_resnet50_model.h5 user@206.162.244.175:~/backend/
-
-# 5. Create systemd service
-sudo nano /etc/systemd/system/tomato-api.service
+export PORT=5006
+python app.py
 ```
 
-**systemd Service Configuration:**
-
-```ini
-[Unit]
-Description=Tomato Disease Detection API
-After=network.target
-
-[Service]
-Type=simple
-User=your-username
-WorkingDirectory=/home/your-username/backend
-Environment="PATH=/home/your-username/backend/venv/bin"
-ExecStart=/home/your-username/backend/venv/bin/python app.py
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-# 6. Start service
-sudo systemctl daemon-reload
-sudo systemctl start tomato-api
-sudo systemctl enable tomato-api
-sudo systemctl status tomato-api
-```
-
-## 🔧 Model Architecture
-
-### ResNet50 with Transfer Learning
-
-```
-Input (224x224x3)
-    ↓
-ResNet50 Base (ImageNet pretrained, frozen)
-    ↓
-Global Average Pooling
-    ↓
-Dense(512, ReLU) + Dropout(0.5)
-    ↓
-Dense(256, ReLU) + Dropout(0.3)
-    ↓
-Dense(10, Softmax)
-    ↓
-Output (10 disease classes)
-```
-
-**Key Features:**
-- Pre-trained on ImageNet (1.2M images, 1000 classes)
-- Transfer learning: leverages learned features
-- Custom classification head for tomato diseases
-- Dropout layers prevent overfitting
-- Data augmentation improves generalization
-
-## 📊 Performance Metrics
-
-**Expected Performance:**
-- Validation Accuracy: 95-98%
-- Top-3 Accuracy: 99%+
-- Inference Time: ~100ms per image
-- Model Size: ~100MB
-
-**Confusion Matrix Analysis:**
-- Highest accuracy: Healthy leaves (99%+)
-- Common confusion: Early vs Late Blight
-- Recommendation: Ensemble multiple predictions
-
-## 🛠️ Troubleshooting
-
-### Model not loading
-
-```bash
-# Check if model file exists
-ls -lh tomato_resnet50_model.h5
-
-# If missing, train the model
-python train.py
-```
-
-### Out of memory during training
-
-```python
-# Reduce batch size in train.py
-BATCH_SIZE = 16  # or 8
-```
-
-### Low accuracy
-
-1. Ensure dataset quality (clean, diverse images)
-2. Increase training epochs
-3. Enable fine-tuning (uncomment in train.py)
-4. Add more data augmentation
-
-### Server not accessible from mobile
-
-```bash
-# Check firewall
-sudo ufw allow 5005
-
-# Verify server is listening on 0.0.0.0
-netstat -tuln | grep 5005
-```
-
-## 📝 Model Training Tips
-
-### For Best Accuracy:
-
-1. **Dataset Quality:**
-   - Minimum 1000 images per class
-   - Diverse lighting conditions
-   - Different leaf angles and backgrounds
-   - Balanced class distribution
-
-2. **Data Augmentation:**
-   - Rotation (40°)
-   - Horizontal/vertical flips
-   - Zoom (20%)
-   - Width/height shifts (20%)
-
-3. **Training Strategy:**
-   - Phase 1: Train only classification head (50 epochs)
-   - Phase 2: Fine-tune last 20 layers (20 epochs)
-   - Use early stopping to prevent overfitting
-   - Monitor validation accuracy
-
-4. **Hyperparameter Tuning:**
-   - Learning rate: 0.0001 (initial), 0.00001 (fine-tuning)
-   - Batch size: 32 (adjust based on GPU memory)
-   - Image size: 224x224 (ResNet50 standard)
-
-## 🤝 Integration with Flutter App
-
-The Flutter app should connect to this backend:
-
-```dart
-// Update baseUrl in api_service.dart
-final String baseUrl = 'http://206.162.244.175:5005';  // VPS
-// or
-final String baseUrl = 'http://10.0.2.2:5005';  // Android Emulator
-```
-
-## 📄 License
-
-This project uses the PlantVillage dataset which is publicly available for research purposes.
-
-## 🙏 Acknowledgments
-
-- PlantVillage Dataset: https://www.kaggle.com/datasets/arjuntejaswi/plant-village
-- ResNet50 Architecture: Deep Residual Learning (He et al., 2015)
-- TensorFlow/Keras Framework
-
-## 📞 Support
-
-For issues or questions:
-1. Check the troubleshooting section
-2. Review training logs: `training_history.png`
-3. Test with health endpoint: `GET /health`
-4. Verify model file exists and is loaded correctly
-
----
-
-**Built with ❤️ for accurate tomato disease detection**
+## License
+This backend uses the pre-trained model from HuggingFace. Model license: See https://huggingface.co/wellCh4n/tomato-leaf-disease-classification-resnet50

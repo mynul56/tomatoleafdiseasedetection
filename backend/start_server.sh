@@ -1,54 +1,34 @@
 #!/bin/bash
 
-# One-click demo script - starts server with or without model
-
-echo "=========================================="
-echo "🍅 Tomato Leaf - Quick Start Demo"
-echo "=========================================="
+echo "========================================="
+echo "Tomato Leaf Backend - Quick Start"
+echo "========================================="
 echo ""
 
 cd "$(dirname "$0")"
 
+# Check if virtual environment exists
+if [ ! -d "venv" ]; then
+    echo "❌ Virtual environment not found!"
+    echo "Run: python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
+    exit 1
+fi
+
+echo "✅ Virtual environment found"
+
 # Check if model exists
-if [ -f "tomato_resnet50_model.h5" ]; then
-    echo "✅ Model found!"
-    echo "   Starting server with trained model..."
-    echo ""
-else
-    echo "⚠️  No trained model found!"
-    echo ""
-    echo "Server will start but predictions will be INACCURATE."
-    echo ""
-    echo "For accurate predictions:"
-    echo "  1. Read: GETTING_STARTED.md"
-    echo "  2. Or run: bash setup_backend.sh"
-    echo ""
-    read -p "Continue anyway? (y/n) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Exiting. Run './setup_backend.sh' to get started properly."
-        exit 1
-    fi
+if [ ! -d "hf_model" ]; then
+    echo "❌ Model directory not found!"
+    exit 1
 fi
 
-# Install dependencies if needed
-if ! python -c "import flask" 2>/dev/null; then
-    echo "📦 Installing dependencies..."
-    pip install -q -r requirements.txt
-fi
+echo "✅ Model directory found"
 
-echo "🚀 Starting Tomato Leaf API Server..."
+# Activate virtual environment and start server
 echo ""
-echo "Server will be available at:"
-echo "  • Local: http://localhost:5005"
-echo "  • Network: http://0.0.0.0:5005"
-echo ""
-echo "Endpoints:"
-echo "  • Health: GET  /health"
-echo "  • Predict: POST /predict"
-echo ""
+echo "Starting server on http://0.0.0.0:5005"
 echo "Press Ctrl+C to stop"
-echo "=========================================="
 echo ""
 
+source venv/bin/activate
 python app.py
