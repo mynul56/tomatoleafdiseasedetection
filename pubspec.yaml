@@ -37,6 +37,9 @@ dependencies:
   image_picker: ^1.1.2
   http: ^1.2.2
   path_provider: ^2.1.4
+  speech_to_text: ^7.0.0
+  flutter_tts: ^4.2.0
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:
@@ -56,14 +59,14 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
+    - assets/images/image.jpg
     - assets/unnamed.jpg
-    - assets/tomato-sticker-white-background/k3z9_6yiz_210608.jpg
 
 flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/unnamed.jpg"
-  adaptive_icon_background: "#4CAF50"
+  adaptive_icon_background: "#047857"
   adaptive_icon_foreground: "assets/unnamed.jpg"
 
   # An image asset can refer to one or more resolution-specific "variants", see
