@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/chat_message.dart';
 import '../services/groq_service.dart';
 import '../services/voice_service.dart';
+import '../l10n/app_localizations.dart';
+import '../providers/language_provider.dart';
 
 class AiAssistantScreen extends StatefulWidget {
   const AiAssistantScreen({super.key});
@@ -26,32 +29,47 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   void initState() {
     super.initState();
     _initializeVoice();
-    _addWelcomeMessage();
   }
 
   Future<void> _initializeVoice() async {
     _voiceInitialized = await _voiceService.initialize();
     if (!_voiceInitialized) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Microphone permission required for voice assistant'),
-          ),
-        );
+        final l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.micPermission)));
       }
     }
   }
 
   void _addWelcomeMessage() {
+    final languageProvider = Provider.of<LanguageProvider>(
+      context,
+      listen: false,
+    );
+
+    // Update services language
+    _groqService.setLanguage(languageProvider.locale.languageCode);
+    _voiceService.setLanguage(languageProvider.locale.languageCode);
+
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _messages.add(
         ChatMessage(
-          text:
-              '👋 Hello! I\'m your AI assistant for tomato plant care.\n\n🧪 Currently running in DEMO MODE with sample responses.\n\nAsk me about tomato leaf diseases, treatments, or plant care!\n\n💡 To get full AI responses, add your Groq API key in lib/config/api_config.dart',
+          text: '${l10n.welcomeAI}\n\n${l10n.demoMode}\n\n${l10n.askQuestion}',
           isUser: false,
         ),
       );
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_messages.isEmpty) {
+      _addWelcomeMessage();
+    }
   }
 
   Future<void> _sendMessage(String text) async {
@@ -89,13 +107,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
   Future<void> _startListening() async {
     if (!_voiceInitialized) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Voice service not available. Grant microphone permission in Settings.',
-          ),
-        ),
-      );
+      final l10n = AppLocalizations.of(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.voiceNotAvailable)));
       return;
     }
 
@@ -105,10 +120,11 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
     // Show feedback to user
     if (mounted) {
+      final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🎤 Listening... Speak now!'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(l10n.listening),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -124,10 +140,11 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         await _sendMessage(recognizedText);
       } else {
         if (mounted) {
+          final l10n = AppLocalizations.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No speech detected. Please try again.'),
-              duration: Duration(seconds: 2),
+            SnackBar(
+              content: Text(l10n.noSpeech),
+              duration: const Duration(seconds: 2),
             ),
           );
         }
@@ -138,10 +155,11 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       });
 
       if (mounted) {
+        final l10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Voice error: ${e.toString().replaceAll('Exception: ', '')}',
+              '${l10n.voiceError}: ${e.toString().replaceAll('Exception: ', '')}',
             ),
             duration: const Duration(seconds: 3),
           ),
@@ -191,9 +209,16 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+
+    // Update service languages when language changes
+    _groqService.setLanguage(languageProvider.locale.languageCode);
+    _voiceService.setLanguage(languageProvider.locale.languageCode);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Assistant'),
+        title: Text(l10n.aiAssistantTitle),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Column(
@@ -206,23 +231,29 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
               child: Row(
                 children: [
                   _buildQuickActionChip(
-                    'Common Diseases',
+                    l10n.commonDiseases,
                     () => _sendMessage(
-                      'What are the most common tomato leaf diseases?',
+                      languageProvider.isEnglish
+                          ? 'What are the most common tomato leaf diseases?'
+                          : 'সবচেয়ে সাধারণ টমেটো পাতার রোগগুলি কী কী?',
                     ),
                   ),
                   const SizedBox(width: 8),
                   _buildQuickActionChip(
-                    'Prevention Tips',
+                    l10n.prevention,
                     () => _sendMessage(
-                      'How can I prevent tomato plant diseases?',
+                      languageProvider.isEnglish
+                          ? 'How can I prevent tomato plant diseases?'
+                          : 'কিভাবে আমি টমেটো গাছের রোগ প্রতিরোধ করতে পারি?',
                     ),
                   ),
                   const SizedBox(width: 8),
                   _buildQuickActionChip(
-                    'Treatment Guide',
+                    l10n.treatment,
                     () => _sendMessage(
-                      'What are general treatment options for tomato diseases?',
+                      languageProvider.isEnglish
+                          ? 'What are general treatment options for tomato diseases?'
+                          : 'টমেটো রোগের সাধারণ চিকিৎসার বিকল্পগুলি কী কী?',
                     ),
                   ),
                 ],
@@ -271,8 +302,8 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                     controller: _textController,
                     decoration: InputDecoration(
                       hintText: _isListening
-                          ? 'Listening...'
-                          : 'Ask me anything...',
+                          ? l10n.listening
+                          : l10n.typeMessage,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -294,7 +325,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                       ? null
                       : () => _sendMessage(_textController.text),
                   icon: const Icon(Icons.send),
-                  tooltip: 'Send message',
+                  tooltip: l10n.send,
                 ),
               ],
             ),

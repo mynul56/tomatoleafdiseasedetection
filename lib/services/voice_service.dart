@@ -9,6 +9,15 @@ class VoiceService {
   bool _isInitialized = false;
   String _lastRecognizedWords = '';
   Completer<String>? _speechCompleter;
+  String _currentLanguage = 'en-US'; // Default to English
+
+  // Set language for speech recognition and TTS
+  Future<void> setLanguage(String languageCode) async {
+    _currentLanguage = languageCode == 'bn' ? 'bn-BD' : 'en-US';
+    if (_isInitialized) {
+      await _flutterTts.setLanguage(_currentLanguage);
+    }
+  }
 
   // Initialize speech recognition and text-to-speech
   Future<bool> initialize() async {
@@ -35,13 +44,15 @@ class VoiceService {
 
       _isInitialized = initialized;
 
-      // Configure TTS
-      await _flutterTts.setLanguage('en-US');
+      // Configure TTS with current language
+      await _flutterTts.setLanguage(_currentLanguage);
       await _flutterTts.setSpeechRate(0.5);
       await _flutterTts.setVolume(1.0);
       await _flutterTts.setPitch(1.0);
 
-      print('Voice service initialized successfully');
+      print(
+        'Voice service initialized successfully with language: $_currentLanguage',
+      );
       return _isInitialized;
     } catch (e) {
       print('Voice service initialization error: $e');
@@ -65,7 +76,7 @@ class VoiceService {
     _speechCompleter = Completer<String>();
 
     try {
-      // Start listening with proper callback
+      // Start listening with proper callback and language
       final success = await _speech.listen(
         onResult: (result) {
           _lastRecognizedWords = result.recognizedWords;
@@ -80,6 +91,7 @@ class VoiceService {
             _speechCompleter!.complete(_lastRecognizedWords);
           }
         },
+        localeId: _currentLanguage,
         listenFor: const Duration(seconds: 30),
         pauseFor: const Duration(seconds: 3),
         partialResults: true,

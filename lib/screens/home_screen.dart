@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'scan_screen.dart';
 import 'ai_assistant_screen.dart';
+import '../l10n/app_localizations.dart';
+import '../providers/language_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -69,6 +72,9 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -90,6 +96,62 @@ class _HomeScreenState extends State<HomeScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const SizedBox(height: 10),
+                  // Language Switcher
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              languageProvider.toggleLanguage();
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.language,
+                                    size: 20,
+                                    color: Color(0xFF047857),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    languageProvider.isEnglish
+                                        ? 'বাংলা'
+                                        : 'English',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF047857),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 20),
                   // Header with Icon
                   Row(
@@ -97,9 +159,11 @@ class _HomeScreenState extends State<HomeScreen>
                     children: [
                       const Icon(Icons.eco, color: Color(0xFF047857), size: 32),
                       const SizedBox(width: 12),
-                      const Text(
-                        'TOMATO CARE',
-                        style: TextStyle(
+                      Text(
+                        languageProvider.isEnglish
+                            ? 'TOMATO CARE'
+                            : 'টমেটো কেয়ার',
+                        style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF047857),
@@ -161,11 +225,11 @@ class _HomeScreenState extends State<HomeScreen>
                   const SizedBox(height: 32),
 
                   // Title
-                  const Text(
-                    'Detect Leaf Diseases',
+                  Text(
+                    l10n.homeTitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 32,
+                    style: const TextStyle(
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF047857),
                       height: 1.2,
@@ -175,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen>
 
                   // Description
                   Text(
-                    'AI-powered disease detection for healthy tomato plants',
+                    l10n.homeSubtitle,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
@@ -206,9 +270,9 @@ class _HomeScreenState extends State<HomeScreen>
                           onPressed: () =>
                               _pickImage(context, ImageSource.camera),
                           icon: const Icon(Icons.camera_alt, size: 26),
-                          label: const Text(
-                            'Take Photo',
-                            style: TextStyle(
+                          label: Text(
+                            l10n.captureImage,
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),
@@ -235,9 +299,9 @@ class _HomeScreenState extends State<HomeScreen>
                             size: 26,
                             color: Color(0xFF047857),
                           ),
-                          label: const Text(
-                            'Choose from Gallery',
-                            style: TextStyle(
+                          label: Text(
+                            l10n.selectImage,
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                               color: Color(0xFF047857),
@@ -270,7 +334,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   horizontal: 16,
                                 ),
                                 child: Text(
-                                  'OR',
+                                  l10n.or,
                                   style: TextStyle(
                                     color: Colors.grey.shade600,
                                     fontWeight: FontWeight.w600,
@@ -296,9 +360,9 @@ class _HomeScreenState extends State<HomeScreen>
                             );
                           },
                           icon: const Icon(Icons.psychology, size: 26),
-                          label: const Text(
-                            'AI Assistant',
-                            style: TextStyle(
+                          label: Text(
+                            l10n.aiAssistant,
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),
@@ -347,7 +411,9 @@ class _HomeScreenState extends State<HomeScreen>
                         const SizedBox(width: 14),
                         Expanded(
                           child: Text(
-                            'For best results, use clear photos with good lighting',
+                            languageProvider.isEnglish
+                                ? 'For best results, use clear photos with good lighting'
+                                : 'সর্বোত্তম ফলাফলের জন্য, ভাল আলোতে পরিষ্কার ছবি ব্যবহার করুন',
                             style: TextStyle(
                               color: Colors.grey.shade800,
                               fontSize: 14,

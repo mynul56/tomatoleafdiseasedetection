@@ -8,6 +8,13 @@ class GroqService {
   static const bool _useDemoMode =
       true; // Set to false when you have your Groq API key
 
+  String _currentLanguage = 'en'; // Default to English
+
+  // Set language for responses
+  void setLanguage(String languageCode) {
+    _currentLanguage = languageCode;
+  }
+
   static const String _systemPrompt =
       '''You are an AI assistant for a Tomato Leaf Disease Detection app. 
 Your role is to help users with:
@@ -19,9 +26,43 @@ Your role is to help users with:
 
 Be helpful, concise, and provide accurate agricultural information.''';
 
+  String _getDemoBanglaResponse(String lowerMessage) {
+    if (lowerMessage.contains('early') ||
+        lowerMessage.contains('আর্লি') ||
+        lowerMessage.contains('ব্লাইট')) {
+      return '🍂 আর্লি ব্লাইট (Alternaria solani)\n\nলক্ষণ: পুরানো, নিচের পাতায় গাঢ় বাদামী দাগ যার মাঝে কেন্দ্রীভূত রিং (বুলস আই প্যাটার্ন) থাকে।\n\nচিকিৎসা:\n• সংক্রমিত পাতা সরান এবং ধ্বংস করুন\n• কপার-ভিত্তিক ছত্রাকনাশক প্রয়োগ করুন\n• বায়ু চলাচল উন্নত করুন\n\nপ্রতিরোধ:\n• ফসল পরিবর্তন করুন (৩-৪ বছর)\n• মাটি ছিটকে যাওয়া রোধে মালচিং করুন\n• মাটি স্তরে পানি দিন, উপরে নয়\n• গাছগুলি ২৪-৩৬ ইঞ্চি দূরত্বে রাখুন';
+    } else if (lowerMessage.contains('late') || lowerMessage.contains('লেট')) {
+      return '⚠️ লেট ব্লাইট (Phytophthora infestans)\n\nলক্ষণ: জলে ভেজা দাগ যা দ্রুত বাদামী হয়ে যায়, নিচের দিকে সাদা তুলতুলে বৃদ্ধি। দিনের মধ্যে গাছ মেরে ফেলতে পারে!\n\nচিকিৎসা:\n• সংক্রমিত গাছ অবিলম্বে সরান\n• ছত্রাকনাশক প্রয়োগ করুন\n• ধ্বংস করুন - কম্পোস্ট করবেন না!\n\nপ্রতিরোধ:\n• প্রতিরোধী জাত ব্যবহার করুন\n• ভাল নিষ্কাশন নিশ্চিত করুন\n• ঠান্ডা, ভেজা আবহাওয়ায় পর্যবেক্ষণ করুন';
+    } else if (lowerMessage.contains('bacterial') ||
+        lowerMessage.contains('ব্যাকটেরিয়া')) {
+      return '🦠 ব্যাকটেরিয়াল স্পট (Xanthomonas)\n\nলক্ষণ: পাতা এবং ফলে ছোট, গাঢ়, চর্বিযুক্ত দেখায় এমন দাগ।\n\nচিকিৎসা:\n• সংক্রমিত গাছ সরান\n• কপার ব্যাকটেরিয়ানাশক প্রয়োগ করুন\n• গাছের মধ্যে যন্ত্র পরিষ্কার করুন\n\nপ্রতিরোধ:\n• রোগমুক্ত বীজ ব্যবহার করুন\n• উপর থেকে পানি দেওয়া এড়িয়ে চলুন\n• ৩+ বছরের জন্য ফসল পরিবর্তন করুন';
+    } else if (lowerMessage.contains('prevent') ||
+        lowerMessage.contains('প্রতিরোধ')) {
+      return '🛡️ রোগ প্রতিরোধের কৌশল:\n\n১. **দূরত্ব**: বায়ু চলাচলের জন্য ২৪-৩৬" দূরে\n২. **পানি**: শুধুমাত্র মাটি স্তরে, সকাল সবচেয়ে ভাল\n৩. **মালচিং**: মাটি ছিটকে যাওয়া রোধ করে\n৪. **পরিবর্তন**: টমেটোর মধ্যে ৩-৪ বছর\n৫. **পরিষ্কার**: ধ্বংসাবশেষ সরান, যন্ত্র পরিষ্কার করুন\n৬. **প্রতিরোধী জাত**: বীজ লেবেল পরীক্ষা করুন\n৭. **পুষ্টি**: সুস্থ গাছ রোগ প্রতিরোধ করে';
+    } else if (lowerMessage.contains('treatment') ||
+        lowerMessage.contains('চিকিৎসা')) {
+      return '💊 চিকিৎসার বিকল্প:\n\n**ছত্রাক রোগ:**\n• কপার-ভিত্তিক ছত্রাকনাশক\n• জৈব: নিম তেল, সালফার\n• সংক্রমিত অংশ সরান\n\n**ব্যাকটেরিয়া রোগ:**\n• কপার স্প্রে\n• সংক্রমিত গাছ সরান\n• নিষ্কাশন উন্নত করুন\n\n**ভাইরাস রোগ:**\n• কোন প্রতিকার নেই - অবিলম্বে সরান\n\n**মূল**: প্রাথমিক সনাক্তকরণ অত্যন্ত গুরুত্বপূর্ণ!';
+    } else if (lowerMessage.contains('common') ||
+        lowerMessage.contains('সাধারণ') ||
+        lowerMessage.contains('রোগ') ||
+        lowerMessage.contains('list')) {
+      return '📋 সাধারণ টমেটো রোগ:\n\n১. আর্লি ব্লাইট - কেন্দ্রীভূত রিং দাগ\n২. লেট ব্লাইট - দ্রুত গাছ মৃত্যু\n৩. সেপ্টোরিয়া লিফ স্পট - ধূসর কেন্দ্রের দাগ\n৪. ব্যাকটেরিয়াল স্পট - গাঢ়, চর্বিযুক্ত দাগ\n৫. টমেটো মোজাইক ভাইরাস - দাগযুক্ত পাতা\n৬. ফুসারিয়াম উইল্ট - একপাশে হলুদ হওয়া\n৭. লিফ মোল্ড - হলুদ দাগ\n৮. স্পাইডার মাইটস - বিন্দুযুক্ত পাতা';
+    } else if (lowerMessage.contains('water') ||
+        lowerMessage.contains('পানি')) {
+      return '💧 সঠিক পানি দেওয়া:\n\n**সর্বোত্তম অনুশীলন:**\n• গভীরভাবে পানি দিন, সপ্তাহে ১-২"\n• সকালে পানি দেওয়া আদর্শ\n• শুধুমাত্র মাটি স্তরে - কখনও উপরে নয়\n• ধারাবাহিক আর্দ্রতা চাপ রোধ করে\n• পাতা ভেজানো এড়িয়ে চলুন\n\n**সমস্যার লক্ষণ:**\n• ঝিমিয়ে পড়া: পানি প্রয়োজন বা শিকড় রোগ\n• হলুদ হওয়া: অতিরিক্ত পানি বা রোগ';
+    } else {
+      return '👋 আমি আপনার টমেটো পরিচর্যা বিশেষজ্ঞ!\n\n**আমাকে জিজ্ঞাসা করুন:**\n• নির্দিষ্ট রোগ সম্পর্কে\n• চিকিৎসার বিকল্প\n• প্রতিরোধ কৌশল\n• পানি দেওয়া এবং যত্ন\n• রোগ সনাক্তকরণ\n\n**চেষ্টা করুন:**\n• "কিভাবে টমেটো রোগ প্রতিরোধ করব?"\n• "লেট ব্লাইট কি?"\n• "টমেটোতে কিভাবে পানি দেব?"\n\nআপনি কি জানতে চান? 🍅';
+    }
+  }
+
   String _getDemoResponse(String message) {
     final lowerMessage = message.toLowerCase();
 
+    if (_currentLanguage == 'bn') {
+      return _getDemoBanglaResponse(lowerMessage);
+    }
+
+    // English responses
     if (lowerMessage.contains('early blight')) {
       return '🍂 Early Blight (Alternaria solani)\n\nSymptoms: Dark brown spots with concentric rings (bull\'s eye pattern) on older, lower leaves.\n\nTreatment:\n• Remove and destroy infected leaves\n• Apply copper-based fungicides\n• Improve air circulation\n\nPrevention:\n• Rotate crops (3-4 years)\n• Mulch to prevent soil splash\n• Water at soil level, not overhead\n• Space plants 24-36 inches apart';
     } else if (lowerMessage.contains('late blight')) {
