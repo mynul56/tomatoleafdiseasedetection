@@ -21,7 +21,7 @@ class VoiceService {
 
   // Initialize speech recognition and text-to-speech
   Future<bool> initialize() async {
-    if (_isInitialized) return true;
+    if (_isInitialized && _speech.isAvailable) return true;
 
     try {
       // Request microphone permission
@@ -31,14 +31,37 @@ class VoiceService {
         return false;
       }
 
+      // Stop any existing instance
+      if (_speech.isListening) {
+        await _speech.stop();
+      }
+
       // Initialize speech to text
       final initialized = await _speech.initialize(
-        onStatus: (status) => print('Speech status: $status'),
-        onError: (error) => print('Speech error: ${error.errorMsg}'),
+        onStatus: (status) {
+          print('Speech status: $status');
+          // If listening stopped, cancel any pending completer
+          if (status == 'notListening' &&
+              _speechCompleter != null &&
+              !_speechCompleter!.isCompleted) {
+            if (_lastRecognizedWords.isNotEmpty) {
+              _speechCompleter!.complete(_lastRecognizedWords);
+            }
+          }
+        },
+        onError: (error) {
+          print('Speech error: ${error.errorMsg}');
+          if (_speechCompleter != null && !_speechCompleter!.isCompleted) {
+            _speechCompleter!.completeError(
+              Exception('Speech recognition error: ${error.errorMsg}'),
+            );
+          }
+        },
       );
 
-      if (!initialized) {
+      if (initialized != true) {
         print('Speech recognition initialization failed');
+        _isInitialized = false;
         return false;
       }
 
@@ -56,6 +79,7 @@ class VoiceService {
       return _isInitialized;
     } catch (e) {
       print('Voice service initialization error: $e');
+      _isInitialized = false;
       return false;
     }
   }
@@ -68,8 +92,14 @@ class VoiceService {
 
     // Check if speech recognition is available
     final isAvailable = _speech.isAvailable;
-    if (!isAvailable) {
+    if (isAvailable != true) {
       throw Exception('Speech recognition not available on this device');
+    }
+
+    // Stop any ongoing listening first
+    if (_speech.isListening) {
+      await _speech.stop();
+      await Future.delayed(const Duration(milliseconds: 100));
     }
 
     _lastRecognizedWords = '';

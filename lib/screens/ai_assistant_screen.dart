@@ -106,11 +106,21 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   }
 
   Future<void> _startListening() async {
+    final l10n = AppLocalizations.of(context);
+
+    // Re-initialize if not initialized
     if (!_voiceInitialized) {
-      final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.voiceNotAvailable)));
+      _voiceInitialized = await _voiceService.initialize();
+      if (!_voiceInitialized) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.voiceNotAvailable)));
+        return;
+      }
+    }
+
+    // Prevent multiple simultaneous listening sessions
+    if (_isListening) {
       return;
     }
 
@@ -120,7 +130,6 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
     // Show feedback to user
     if (mounted) {
-      final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.listening),
