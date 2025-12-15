@@ -46,6 +46,9 @@ class AppLocalizations {
       'noImageSelected': 'No image selected',
       'analysisError': 'Error analyzing image. Please try again.',
       'networkError': 'Network error. Please check your connection.',
+      'notTomatoLeaf': 'Not a Tomato Leaf',
+      'notTomatoLeafDesc':
+          'This image doesn\'t appear to be a tomato leaf. Please capture a clear image of a tomato leaf for accurate disease detection.',
 
       // AI Assistant Screen
       'aiAssistantTitle': 'AI Assistant',
@@ -121,6 +124,9 @@ class AppLocalizations {
       'noImageSelected': 'কোনো ছবি নির্বাচন করা হয়নি',
       'analysisError': 'ছবি বিশ্লেষণে ত্রুটি। দয়া করে আবার চেষ্টা করুন।',
       'networkError': 'নেটওয়ার্ক ত্রুটি। দয়া করে আপনার সংযোগ পরীক্ষা করুন।',
+      'notTomatoLeaf': 'এটি টমেটো পাতা নয়',
+      'notTomatoLeafDesc':
+          'এই ছবিটি টমেটো পাতা বলে মনে হচ্ছে না। সঠিক রোগ সনাক্তকরণের জন্য দয়া করে একটি স্পষ্ট টমেটো পাতার ছবি তুলুন।',
 
       // AI Assistant Screen
       'aiAssistantTitle': 'এআই সহায়ক',
