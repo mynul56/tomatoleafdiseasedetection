@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/chat_message.dart';
 import '../services/groq_service.dart';
-import '../services/voice_service.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/language_provider.dart';
 
@@ -18,30 +17,8 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final GroqService _groqService = GroqService();
-  final VoiceService _voiceService = VoiceService();
 
   bool _isLoading = false;
-  bool _isListening = false;
-  bool _isSpeaking = false;
-  bool _voiceInitialized = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeVoice();
-  }
-
-  Future<void> _initializeVoice() async {
-    _voiceInitialized = await _voiceService.initialize();
-    if (!_voiceInitialized) {
-      if (mounted) {
-        final l10n = AppLocalizations.of(context);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.micPermission)));
-      }
-    }
-  }
 
   void _addWelcomeMessage() {
     final languageProvider = Provider.of<LanguageProvider>(
@@ -51,7 +28,6 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
     // Update services language
     _groqService.setLanguage(languageProvider.locale.languageCode);
-    _voiceService.setLanguage(languageProvider.locale.languageCode);
 
     final l10n = AppLocalizations.of(context);
     setState(() {
@@ -105,97 +81,6 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     }
   }
 
-  Future<void> _startListening() async {
-    final l10n = AppLocalizations.of(context);
-
-    // Re-initialize if not initialized
-    if (!_voiceInitialized) {
-      _voiceInitialized = await _voiceService.initialize();
-      if (!_voiceInitialized) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.voiceNotAvailable)));
-        return;
-      }
-    }
-
-    // Prevent multiple simultaneous listening sessions
-    if (_isListening) {
-      return;
-    }
-
-    setState(() {
-      _isListening = true;
-    });
-
-    // Show feedback to user
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.listening),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-
-    try {
-      final recognizedText = await _voiceService.listen();
-
-      setState(() {
-        _isListening = false;
-      });
-
-      if (recognizedText.isNotEmpty) {
-        await _sendMessage(recognizedText);
-      } else {
-        if (mounted) {
-          final l10n = AppLocalizations.of(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(l10n.noSpeech),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      setState(() {
-        _isListening = false;
-      });
-
-      if (mounted) {
-        final l10n = AppLocalizations.of(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${l10n.voiceError}: ${e.toString().replaceAll('Exception: ', '')}',
-            ),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _speakMessage(String text) async {
-    if (!_voiceInitialized) return;
-
-    setState(() {
-      _isSpeaking = true;
-    });
-
-    await _voiceService.speak(text);
-
-    // Wait for speech to complete
-    await Future.delayed(Duration(milliseconds: text.length * 50));
-
-    if (mounted) {
-      setState(() {
-        _isSpeaking = false;
-      });
-    }
-  }
-
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -212,7 +97,6 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
-    _voiceService.dispose();
     super.dispose();
   }
 
@@ -223,7 +107,6 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
     // Update service languages when language changes
     _groqService.setLanguage(languageProvider.locale.languageCode);
-    _voiceService.setLanguage(languageProvider.locale.languageCode);
 
     return Scaffold(
       appBar: AppBar(
@@ -292,27 +175,15 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
           // Input area
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                // Voice button
-                IconButton(
-                  onPressed: _isListening ? null : _startListening,
-                  icon: Icon(
-                    _isListening ? Icons.mic : Icons.mic_none,
-                    color: _isListening ? Colors.red : Colors.green,
-                  ),
-                  tooltip: 'Voice input',
-                ),
-
                 // Text input
                 Expanded(
                   child: TextField(
                     controller: _textController,
                     decoration: InputDecoration(
-                      hintText: _isListening
-                          ? l10n.listening
-                          : l10n.typeMessage,
+                      hintText: l10n.typeMessage,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -322,7 +193,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                       ),
                     ),
                     onSubmitted: _sendMessage,
-                    enabled: !_isLoading && !_isListening,
+                    enabled: !_isLoading,
                   ),
                 ),
 
@@ -330,7 +201,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
                 // Send button
                 IconButton(
-                  onPressed: _isLoading || _isListening
+                  onPressed: _isLoading
                       ? null
                       : () => _sendMessage(_textController.text),
                   icon: const Icon(Icons.send),
@@ -378,43 +249,12 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                     : Colors.grey.shade200,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    message.text,
-                    style: TextStyle(
-                      color: message.isUser ? Colors.white : Colors.black87,
-                      fontSize: 15,
-                    ),
-                  ),
-                  if (!message.isUser) ...[
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: () => _speakMessage(message.text),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _isSpeaking
-                                ? Icons.volume_up
-                                : Icons.volume_up_outlined,
-                            size: 16,
-                            color: Colors.grey.shade600,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Listen',
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
+              child: Text(
+                message.text,
+                style: TextStyle(
+                  color: message.isUser ? Colors.white : Colors.black87,
+                  fontSize: 15,
+                ),
               ),
             ),
           ),

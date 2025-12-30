@@ -27,13 +27,20 @@ class PredictionResult {
       treatmentList = [];
     }
 
-    final confidenceValue = (json['confidence'] is int
+    // Backend returns confidence as decimal (0.0-1.0), convert to percentage
+    final rawConfidence = (json['confidence'] is int
         ? (json['confidence'] as int).toDouble()
         : (json['confidence'] ?? 0.0).toDouble());
 
+    // If confidence is <= 1.0, it's a decimal - multiply by 100
+    // If it's > 1.0, it's already a percentage
+    final confidenceValue = rawConfidence <= 1.0
+        ? rawConfidence * 100
+        : rawConfidence;
+
     return PredictionResult(
       disease: json['disease'] ?? 'Unknown',
-      confidence: confidenceValue, // Backend already returns percentage
+      confidence: confidenceValue,
       description: json['description'] ?? 'No description available',
       treatment: treatmentList,
       isValid: true, // Client-side will override this

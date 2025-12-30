@@ -10,7 +10,7 @@ class ApiService {
   // For iOS Simulator: use localhost or your machine's IP
   // For physical device: use your machine's local IP address (e.g., http://192.168.x.x:5005)
   // For VPS: use your VPS IP or domain (e.g., http://206.162.244.175:5005)
-  static const String baseUrl = 'http://206.162.244.175:5005';
+  static const String baseUrl = 'http://10.0.70.201:5005';
 
   // Validate if image has leaf-like characteristics (green colors and texture)
   Future<bool> _validateLeafImage(File imageFile) async {
@@ -29,10 +29,12 @@ class ApiService {
       // Sample pixels and check for green dominance and texture
       int greenPixels = 0;
       int leafGreenPixels = 0; // More specific leaf green
+      int brownYellowPixels = 0; // Diseased leaf colors
       int totalSamples = 0;
       int brightnessSum = 0;
-      final step = (image.width / 20)
-          .ceil(); // Sample every 20th pixel for efficiency
+      List<int> greenValues = [];
+      final step = (image.width / 25)
+          .ceil(); // Sample more pixels for better accuracy
 
       for (int y = 0; y < image.height; y += step) {
         for (int x = 0; x < image.width; x += step) {
@@ -44,9 +46,10 @@ class ApiService {
           // Calculate brightness
           final brightness = (r + g + b) / 3;
           brightnessSum += brightness.toInt();
+          greenValues.add(g);
 
-          // Check for general green (including diseased brownish leaves)
-          if (g > r * 0.85 || (g > 70 && g > b * 0.85)) {
+          // Check for general green (including slightly diseased leaves)
+          if (g > r * 0.8 && g > b * 0.8 && g > 50) {
             greenPixels++;
           }
 
@@ -54,14 +57,22 @@ class ApiService {
           // Leaves typically: green dominant, not too bright/dark, balanced ratios
           if (g > r &&
               g > b && // Green dominant
-              g >= 40 &&
-              g <= 220 && // Reasonable green range
-              r >= 20 &&
-              r <= 180 && // Not pure colors
-              brightness > 40 &&
-              brightness < 230) {
+              g >= 50 &&
+              g <= 200 && // Reasonable green range
+              r >= 30 &&
+              r <= 160 && // Not pure colors
+              brightness > 50 &&
+              brightness < 210) {
             // Not too dark/bright
             leafGreenPixels++;
+          }
+
+          // Check for diseased leaf colors (brown, yellow, tan)
+          // These colors appear on sick tomato leaves
+          if ((r > g && r > b && g > b * 0.7 && r >= 80 && r <= 180) || // Brown
+              (r > b && g > b && (r - g).abs() < 40 && r >= 120)) {
+            // Yellow
+            brownYellowPixels++;
           }
           totalSamples++;
         }
@@ -70,7 +81,17 @@ class ApiService {
       // Calculate ratios
       final greenRatio = greenPixels / totalSamples;
       final leafGreenRatio = leafGreenPixels / totalSamples;
+      final brownYellowRatio = brownYellowPixels / totalSamples;
       final avgBrightness = brightnessSum / totalSamples;
+
+      // Calculate color variance (leaves have texture/patterns)
+      double variance = 0;
+      final avgGreen = greenValues.reduce((a, b) => a + b) / greenValues.length;
+      for (var g in greenValues) {
+        variance += (g - avgGreen) * (g - avgGreen);
+      }
+      variance = variance / greenValues.length;
+      final hasTexture = variance > 200; // Leaves have some color variation
 
       print(
         '[Validation] Green ratio: ${(greenRatio * 100).toStringAsFixed(1)}%',
@@ -78,16 +99,27 @@ class ApiService {
       print(
         '[Validation] Leaf green ratio: ${(leafGreenRatio * 100).toStringAsFixed(1)}%',
       );
+      print(
+        '[Validation] Brown/Yellow ratio: ${(brownYellowRatio * 100).toStringAsFixed(1)}%',
+      );
       print('[Validation] Avg brightness: ${avgBrightness.toStringAsFixed(1)}');
+      print('[Validation] Color variance: ${variance.toStringAsFixed(1)}');
+      print('[Validation] Has texture: $hasTexture');
 
-      // Stricter validation: require both general green AND leaf-specific green
-      // At least 30% general green AND 20% leaf-specific green
-      // Also check brightness isn't too extreme (avoid pure artificial colors)
+      // Combined leaf color (green + brown/yellow for diseased leaves)
+      final totalLeafColors = greenRatio + brownYellowRatio * 0.5;
+
+      // Stricter validation:
+      // 1. Need significant green OR brown/yellow (diseased leaves)
+      // 2. Need leaf-specific green presence
+      // 3. Brightness in natural range
+      // 4. Some texture/variance (not uniform color)
       final isValid =
-          greenRatio >= 0.30 &&
-          leafGreenRatio >= 0.20 &&
-          avgBrightness > 40 &&
-          avgBrightness < 200;
+          (greenRatio >= 0.25 || totalLeafColors >= 0.35) &&
+          leafGreenRatio >= 0.15 &&
+          avgBrightness > 45 &&
+          avgBrightness < 195 &&
+          hasTexture;
 
       print('[Validation] Result: ${isValid ? "PASS" : "FAIL"}');
       return isValid;
@@ -122,12 +154,23 @@ class ApiService {
         final result = PredictionResult.fromJson(jsonData);
 
         // Override isValid with our client-side validation
+        // Strict confidence check: model should have high confidence (>70%) for real tomato leaves
+        // Non-tomato leaves (potato, onion, flower) will get lower confidence (40-60%)
+        // because the model was only trained on tomato leaves
+        final isConfident = result.confidence >= 70.0;
+        final isValidImage = isLeafLike && isConfident;
+
+        print(
+          '[Validation] Model confidence: ${result.confidence}%, isConfident: $isConfident',
+        );
+        print('[Validation] Final isValid: $isValidImage');
+
         return PredictionResult(
           disease: result.disease,
           confidence: result.confidence,
           description: result.description,
           treatment: result.treatment,
-          isValid: isLeafLike,
+          isValid: isValidImage,
         );
       } else {
         throw Exception('Failed to predict disease: ${response.statusCode}');
